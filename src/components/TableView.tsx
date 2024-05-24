@@ -1,11 +1,12 @@
 import type { PropType } from "vue";
 import {
+  computed,
   defineComponent,
   nextTick,
   onBeforeUnmount,
   onMounted,
   provide,
-  ref,
+  ref, watchEffect,
 } from "vue";
 import { ElConfigProvider } from "element-plus";
 import { TableViewHeader } from "./header";
@@ -37,9 +38,7 @@ const TableView = <Row, Search extends Dictionary>() =>
 
       const loading = ref(false);
       const searchValue = ref<Search | {}>({});
-      const currentConfig = ref<Config<Row, Search>>(
-        merge({}, GlobalConfig.globalConfig, props.config)
-      );
+      const currentConfig = computed(() => merge({}, GlobalConfig.globalConfig, props.config));
       const dataList = ref<Row[]>();
       const paginationInfo = ref<PaginationData>({
         currentPage: 1,
@@ -242,7 +241,7 @@ const TableView = <Row, Search extends Dictionary>() =>
               onExportData={exportData}
               v-slots={headerSlots}
             />
-            <Body ref={bodyRef} />
+            <Body ref={bodyRef} config={currentConfig.value} />
             {currentConfig.value.usePagination && <Footer ref={footerRef} />}
           </ElConfigProvider>
         </div>

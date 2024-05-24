@@ -8,8 +8,8 @@ import type {
   RadioChangedEvent,
   CheckAllEvent,
 } from "@/config";
-import type { Ref, VNode } from "vue";
-import { defineComponent, inject, ref } from "vue";
+import type {PropType, Ref, VNode} from "vue";
+import {defineComponent, inject, ref, watchEffect} from "vue";
 import { Fixed } from "@/config";
 import { Table as VxeTable, Column as VxeColumn } from "vxe-table";
 import { Operations } from "./Operations";
@@ -17,15 +17,20 @@ import { Operations } from "./Operations";
 export const TableViewBody = <Row, Search extends Dictionary>() =>
   defineComponent({
     name: "TableViewBody",
+    props: {
+      config: {
+        type: Object as PropType<Config<Row, Search>>,
+        required: true,
+      },
+    },
     setup(props, { expose }) {
       const tableRef = ref();
-      const currentConfig = inject<Ref<Config<Row, Search>>>("currentConfig");
       const dataList = inject<Ref<Row[]>>("dataList");
       const loading = inject<Ref<boolean>>("loading");
 
       function specialColumnRender(): Array<VNode | undefined> {
         return [
-          currentConfig?.value.needCheckbox ? (
+          props.config.needCheckbox ? (
             <vxe-column
               type="checkbox"
               width="40"
@@ -33,17 +38,17 @@ export const TableViewBody = <Row, Search extends Dictionary>() =>
               align="center"
             />
           ) : undefined,
-          currentConfig?.value.needRadio ? (
+          props.config.needRadio ? (
             <vxe-column type="radio" width="40" fixed="left" align="center" />
           ) : undefined,
-          currentConfig?.value.needSeq ? (
+          props.config.needSeq ? (
             <vxe-column type="seq" title="编号" width="80" fixed="left" />
           ) : undefined,
         ];
       }
 
       function columnRender(): VNode[] {
-        return (currentConfig?.value.columns || []).map((column) => {
+        return (props.config.columns || []).map((column) => {
           return (
             <VxeColumn
               v-slots={columnScopedSlots(column)}
@@ -100,25 +105,25 @@ export const TableViewBody = <Row, Search extends Dictionary>() =>
       }
 
       function onRadioChange(value: RadioChangedEvent<Row>): void {
-        if (typeof currentConfig?.value?.onRadioChange === "function") {
-          currentConfig?.value?.onRadioChange(value);
+        if (typeof props.config?.onRadioChange === "function") {
+          props.config?.onRadioChange(value);
         }
       }
 
       function onCheckboxChange(records: CheckboxChangedEvent<Row>): void {
-        if (typeof currentConfig?.value?.onCheckboxChange === "function") {
-          currentConfig?.value?.onCheckboxChange(records);
+        if (typeof props.config?.onCheckboxChange === "function") {
+          props.config?.onCheckboxChange(records);
         }
       }
 
       function onCheckAll(records: CheckAllEvent<Row>): void {
-        if (typeof currentConfig?.value?.onCheckAll === "function") {
-          currentConfig?.value?.onCheckAll(records);
+        if (typeof props.config?.onCheckAll === "function") {
+          props.config?.onCheckAll(records);
         }
       }
 
       const tableSize = ref();
-      switch (currentConfig?.value.size) {
+      switch (props.config.size) {
         case "default":
         default:
           tableSize.value = "small";
@@ -144,8 +149,8 @@ export const TableViewBody = <Row, Search extends Dictionary>() =>
       const slots = {
         empty() {
           return (
-            currentConfig?.value.emptyRender?.() ?? (
-              <span>{currentConfig?.value.emptyText}</span>
+            props.config.emptyRender?.() ?? (
+              <span>{props.config.emptyText}</span>
             )
           );
         },
@@ -159,19 +164,19 @@ export const TableViewBody = <Row, Search extends Dictionary>() =>
             height="100%"
             data={dataList?.value}
             size={tableSize.value}
-            stripe={currentConfig?.value.stripe}
-            border={currentConfig?.value.border}
-            round={currentConfig?.value.round}
-            empty-text={currentConfig?.value.emptyText}
-            tree-config={currentConfig?.value.treeConfig}
+            stripe={props.config.stripe}
+            border={props.config.border}
+            round={props.config.round}
+            empty-text={props.config.emptyText}
+            tree-config={props.config.treeConfig}
             onCheckboxAll={onCheckAll}
             onRadioChange={onRadioChange}
             onCheckboxChange={onCheckboxChange}
-            {...(currentConfig?.value.extraConfig || {})}
+            {...(props.config.extraConfig || {})}
           >
             {...specialColumnRender()}
             {columnRender()}
-            {currentConfig?.value.useOperations !== false
+            {props.config.useOperations !== false
               ? Operations<Row, Search>()
               : undefined}
           </VxeTable>
